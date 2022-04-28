@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="https://glitch.com/favicon.ico" />
+    <title>pyomyo-js</title>
+    <style></style>
+    <script src="pyomyo.js"></script>
+  </head>
+  <body>
+    <canvas
+      id="canvas"
+      width="300"
+      height="300"
+      style="border: 1px solid #d3d3d3"
+    >
+      Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div id="emg">
+      
+    </div>
+    <a href="diagnostic/">diagnostic</a>
+    <script>
+      let myo = new pyomyo("localhost", 9898);
+      myo.onopen = () => myo.connect(pyomyo.Mode.RAW/*PREPROCESSED*/);
+
+      window.onload = function () {
+        const div = document.querySelector("#emg");
+        const mins = [0,0,0,0,0,0,0,0];
+        const maxs = [0,0,0,0,0,0,0,0];
+        
+        const canvas = document.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "green";
+        ctx.fillRect(10, 10, 100, 100);
+
+        myo.onemg = (emgs) => {
+          // TODO show the approximative framerate Hz
+          
+          //console.log(emgs)
+          ctx.clearRect(0, 0, 300, 300);
+          ctx.fillStyle =
+            "rgba(" + emgs[4] + ", " + emgs[5] + ", " + emgs[6] + ", 1)";
+          ctx.strokeStyle = "rgba(" + emgs[6] + ", " + emgs[7] + ",255,1)";
+          ctx.lineWidth = 5;
+          
+          const x = (emgs[0]-mins[0])/(maxs[0]-mins[0])*150;
+          const y = (emgs[1]-mins[1])/(maxs[1]-mins[1])*150;
+          
+          ctx.fillRect(x, y, emgs[2], emgs[3]);
+          ctx.strokeRect(x, y, emgs[2], emgs[3]);
+          
+          let str = '';
+          for (let i = 0; i < emgs.length; ++i) {
+            mins[i] = Math.min(mins[i], emgs[i]);
+            maxs[i] = Math.max(maxs[i], emgs[i]);
+            str += `<p>${mins[i]} <= ${emgs[i]} <= ${maxs[i]}</p>`;
+          }
+          div.innerHTML = str;
+        };
+      };
+    </script>
+  </body>
+</html>
