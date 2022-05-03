@@ -14,12 +14,12 @@ async def handler(websocket, path):
 
 	def send(obj):
 		if websocket.open:
-			asyncio.create_task(raw_send(obj))#websocket.send(json.dumps(obj)))
+			asyncio.create_task(raw_send(obj))
 
-	def emg_handler(emg, moving, times=[]):
+	def emg_handler(emg, moving):
 		send({"type":"emg", "data":emg})
 	def imu_handler(quat, acc, gyro):
-		send({"type":"imu", "data":quat})
+		send({"type":"imu", "data":{"quat":quat, "acc":acc, "gyro":gyro}})
 	#def arm_handler
 	def pose_handler(p):
 		send({"type":"pose", "data":p})
@@ -32,11 +32,11 @@ async def handler(websocket, path):
 		type = event["type"]
 		if (type == "connect"): # mode 0-3
 			m.mode = emg_mode(int(event["mode"]))
-			m.add_emg_handler(emg_handler)#lambda emg, moving, times=[]: send({"type":"emg", "data":emg}))
-			m.add_imu_handler(imu_handler)#lambda quat, acc, gyro: send({"type":"imu", "data":quat}))
-			m.add_pose_handler(pose_handler)#lambda p: send({"type":"pose", "data":p}))
+			m.add_emg_handler(emg_handler)
+			m.add_imu_handler(imu_handler)
+			m.add_pose_handler(pose_handler)
 			#m.add_arm_handler(lambda arm, xdir: send({"type":"arm", "data":arm}))
-			m.add_battery_handler(battery_handler)#lambda battery_level: send({"type":"battery", "data":battery_level}))
+			m.add_battery_handler(battery_handler)
 			m.connect()
 			await websocket.send(json.dumps({"type":"connect", "message":"myo connected"}))
 		elif (type == "power_off"):
